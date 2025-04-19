@@ -1,75 +1,105 @@
 ---
 license: mit
+datasets:
+- benax-rw/my_kinyarwanda_dataset
 language:
 - rw
-pretty_name: KinyaWhisper
-task_categories:
-- automatic-speech-recognition
+metrics:
+- wer
+base_model: openai/whisper-small
+pipeline_tag: automatic-speech-recognition
+library_name: transformers
 tags:
-- rw
-- Kin
-- Kinyarwanda
-- Rwanda
-- ururimi
-- rwacu
-- ururimi rwacu
-size_categories:
-- n<1K
-configs:
-- config_name: default
-  data_files:
-  - split: train
-    path: data/train-*
-dataset_info:
-  features:
-  - name: audio
-    dtype: audio
-  - name: text
-    dtype: string
-  - name: audio_len
-    dtype: float64
-  - name: transcript_len
-    dtype: int64
-  - name: len_ratio
-    dtype: float64
-  splits:
-  - name: train
-    num_bytes: 2475947.0
-    num_examples: 102
-  download_size: 2478359
-  dataset_size: 2475947.0
+- kinyarwanda
+- asr
+- whisper
+- low-resource
+- fine-tuning
+- benax-technologies
+- transformers
+- torchaudio
+- speech-recognition
+model-index:
+- name: KinyaWhisper
+  results:
+  - task:
+      name: Automatic Speech Recognition
+      type: automatic-speech-recognition
+    dataset:
+      name: KinyaWhisper Custom Dataset
+      type: custom
+      config: kinyarwanda
+    metrics:
+    - name: WER
+      type: wer
+      value: 51.85
 ---
-# Kinyarwanda Spoken Words Dataset
 
-This dataset contains 102 short audio samples of spoken Kinyarwanda words, each labeled with its corresponding transcription. It is designed for training, evaluating, and experimenting with Automatic Speech Recognition (ASR) models in low-resource settings.
+## 🗣️ KinyaWhisper
+KinyaWhisper is a fine-tuned version of OpenAI’s Whisper model for automatic speech recognition (ASR) in Kinyarwanda. It was trained on 102 manually labeled .wav files and serves as a reproducible baseline for speech recognition in low-resource, indigenous languages.
 
-## Structure
+## 🤗 Hugging Face Model
 
-- `audio/`: Contains 102 `.wav` files (mono, 16kHz)
-- `transcripts.txt`: Tab-separated transcription file (e.g., `001.wav\tmuraho`)
-- `manifest.jsonl`: JSONL file with audio paths and text labels (compatible with 🤗 Datasets and Whisper training scripts)
+The fine-tuned KinyaWhisper model is publicly available on Hugging Face:
 
-## Example
+➡️ [https://huggingface.co/benax-rw/KinyaWhisper](https://huggingface.co/benax-rw/KinyaWhisper)
 
-```json
-{"audio_filepath": "audio/001.wav", "text": "muraho"}
-```
-
-## Usage
+You can use it directly in your code:
 
 ```python
-from datasets import load_dataset
+from transformers import WhisperProcessor, WhisperForConditionalGeneration
 
-ds = load_dataset("benax-rw/my_kinyarwanda_dataset", split="train")
-example = ds[0]
-print(example["audio"]["array"], example["text"])
+model = WhisperForConditionalGeneration.from_pretrained("benax-rw/KinyaWhisper")
+processor = WhisperProcessor.from_pretrained("benax-rw/KinyaWhisper")
+
+To run inference on your own audio files using the fine-tuned KinyaWhisper model:
+
+```python
+from transformers import WhisperProcessor, WhisperForConditionalGeneration
+import torchaudio
+
+# Load fine-tuned KinyaWhisper model and processor from Hugging Face
+model = WhisperForConditionalGeneration.from_pretrained("benax-rw/KinyaWhisper")
+processor = WhisperProcessor.from_pretrained("benax-rw/KinyaWhisper")
+
+# Load and preprocess audio
+waveform, sample_rate = torchaudio.load("your_audio.wav")
+inputs = processor(waveform.squeeze(), sampling_rate=sample_rate, return_tensors="pt")
+
+# Generate prediction
+predicted_ids = model.generate(inputs["input_features"])
+transcription = processor.batch_decode(predicted_ids, skip_special_tokens=True)[0]
+
+print("🗣️ Transcription:", transcription)
 ```
 
-## License
+## 🏋️ Taining Details
+•	Model: openai/whisper-small
+•	Epochs: 80
+•	Batch size: 4
+•	Learning rate: 1e-5
+•	Optimizer: Adam
+•	Final loss: 0.00024
+•	WER: 51.85%
 
-This dataset is published for educational and research purposes.
+## ⚠️Limitations
+The model was trained on a small dataset (102 samples). It performs best on short, clear Kinyarwanda utterances and may struggle with longer or noisy audio. This is an early-stage educational model, not yet suitable for production use.
 
-## Citation
+## 📚 Citation
 
-If you use this dataset, please cite:
-> Benax Labs, KinyaWhisper Dataset for Fine-tuning Whisper on Kinyarwanda (2025)
+If you use this model, please cite:
+
+```bibtex
+@misc{baziramwabo2025kinyawhisper,
+  author       = {Gabriel Baziramwabo},
+  title        = {KinyaWhisper: Fine-Tuning Whisper for Kinyarwanda ASR},
+  year         = {2025},
+  publisher    = {Hugging Face},
+  howpublished = {\url{https://huggingface.co/benax-rw/KinyaWhisper}},
+  note         = {Version 1.0}
+}
+```
+## 📬 Contact
+Maintained by Gabriel Baziramwabo. 
+✉️ gabriel@benax.rw
+🔗 https://benax.rw
