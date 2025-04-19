@@ -11,14 +11,6 @@ You can use it directly in your code:
 
 ```python
 from transformers import WhisperProcessor, WhisperForConditionalGeneration
-
-model = WhisperForConditionalGeneration.from_pretrained("benax-rw/KinyaWhisper")
-processor = WhisperProcessor.from_pretrained("benax-rw/KinyaWhisper")
-
-To run inference on your own audio files using the fine-tuned KinyaWhisper model:
-
-```python
-from transformers import WhisperProcessor, WhisperForConditionalGeneration
 import torchaudio
 
 # Load fine-tuned KinyaWhisper model and processor from Hugging Face
