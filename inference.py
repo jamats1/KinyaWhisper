@@ -1,47 +1,43 @@
-#!/usr/bin/env python3
-"""
-test_model.py
-
-Performs transcription on audio samples using a fine-tuned Whisper model.
-"""
-
 from transformers import WhisperProcessor, WhisperForConditionalGeneration
 import torchaudio
 import torch
 import os
+from pathlib import Path
 
-model_dir = "kinya-whisper-model"
-audio_dir = "audio"
-output_file = "transcriptions.txt"
+# ====== Configuration ======
+audio_path = "unseen_audio_data/rw-unseen001.mp3"
+output_dir = "transcription_output"
 
-# Load model and processor
-model = WhisperForConditionalGeneration.from_pretrained(model_dir)
-processor = WhisperProcessor.from_pretrained(model_dir)
+# ====== Load model and processor ======
+model = WhisperForConditionalGeneration.from_pretrained("benax-rw/KinyaWhisper")
+processor = WhisperProcessor.from_pretrained("benax-rw/KinyaWhisper")
 
-model.eval()
-device = torch.device("cpu")
+# ====== Load and preprocess audio ======
+waveform, sample_rate = torchaudio.load(audio_path)
 
-with open(output_file, "w") as f_out:
-    for i in range(1, 103):
-        filename = f"{i:03}.wav"
-        filepath = os.path.join(audio_dir, filename)
-        print(f"🔍 Transcribing {filename}...")
+# Convert stereo to mono if needed
+if waveform.shape[0] > 1:
+    waveform = waveform.mean(dim=0)
 
-        waveform, sample_rate = torchaudio.load(filepath)
-        inputs = processor(waveform.squeeze(), sampling_rate=sample_rate, return_tensors="pt")
+# Prepare input
+inputs = processor(waveform, sampling_rate=sample_rate, return_tensors="pt")
 
-        with torch.no_grad():
-            predicted_ids = model.generate(
-                inputs["input_features"],
-                max_length=64,
-                num_beams=5,
-                do_sample=False,
-                repetition_penalty=1.5,
-                no_repeat_ngram_size=3,
-                length_penalty=1.2,
-                early_stopping=True
-            )
+# Generate transcription
+with torch.no_grad():
+    predicted_ids = model.generate(inputs["input_features"])
 
-        transcription = processor.batch_decode(predicted_ids, skip_special_tokens=True)[0]
-        print(f"{filename}: {transcription}")
-        f_out.write(f"{filename}: {transcription}\n")
+# Decode transcription
+transcription = processor.batch_decode(predicted_ids, skip_special_tokens=True)[0]
+print("🗣️ Transcription:", transcription)
+
+# ====== Prepare output file path ======
+input_filename = Path(audio_path).stem  # e.g., "rw-unseen001"
+output_path = Path(output_dir)
+output_path.mkdir(parents=True, exist_ok=True)  # Create folder if not exist
+output_file = output_path / f"{input_filename}.txt"
+
+# Save to file
+with open(output_file, "w", encoding="utf-8") as f:
+    f.write(transcription)
+
+print(f"Transcription saved to '{output_file}'")
