@@ -5,7 +5,7 @@ import os
 from pathlib import Path
 
 # ====== Configuration ======
-audio_path = "unseen_audio_data/rw-unseen001.mp3"
+audio_path = "unseen_audio_data/rw-unseen-001.mp3"
 output_dir = "transcription_output"
 
 # ====== Load model and processor ======
@@ -28,7 +28,7 @@ with torch.no_grad():
 
 # Decode transcription
 transcription = processor.batch_decode(predicted_ids, skip_special_tokens=True)[0]
-print("🗣️ Transcription:", transcription)
+print("Transcription:", transcription)
 
 # ====== Prepare output file path ======
 input_filename = Path(audio_path).stem  # e.g., "rw-unseen001"
