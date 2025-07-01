@@ -19,10 +19,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /app
 
 # Install Python dependencies first for caching benefits
-COPY requirements.txt ./
+COPY requirements-prod.txt ./
 RUN pip install --upgrade pip && \
-    grep -Ev "pyobjc|^sklearn==" requirements.txt > requirements-filtered.txt && \
-    pip install --no-cache-dir -r requirements-filtered.txt
+    pip install --no-cache-dir -r requirements-prod.txt
 
 # Copy rest of application source
 COPY . .

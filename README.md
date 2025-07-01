@@ -1,5 +1,5 @@
 ## 🗣️ KinyaWhisper
-KinyaWhisper is a fine-tuned version of OpenAI’s Whisper model for automatic speech recognition (ASR) in Kinyarwanda. It was trained on 102 manually labeled .wav files and serves as a reproducible baseline for speech recognition in low-resource, indigenous languages.
+KinyaWhisper is a fine-tuned version of OpenAI's Whisper model for automatic speech recognition (ASR) in Kinyarwanda. It was trained on 102 manually labeled .wav files and serves as a reproducible baseline for speech recognition in low-resource, indigenous languages.
 
 ## 🤗 Hugging Face Model
 
@@ -57,4 +57,35 @@ If you use this model, please cite:
 ## 📬 Contact
 Maintained by Gabriel Baziramwabo. 
 ✉️ gabriel@benax.rw
-🔗 https://benax.rw
+�� https://benax.rw
+
+## 🚀 Deployment (Coolify / Docker)
+
+This repository includes a production-ready Dockerfile tested on Coolify.
+Only the libraries actually required at runtime are installed to keep image size and build time low.
+
+1. `requirements-prod.txt` lists the **5** necessary packages:
+   - Flask
+   - Werkzeug
+   - torch
+   - torchaudio
+   - transformers
+
+2. The Dockerfile now copies and installs this file directly:
+   ```dockerfile
+   COPY requirements-prod.txt ./
+   RUN pip install --upgrade pip && \
+       pip install --no-cache-dir -r requirements-prod.txt
+   ```
+
+To build locally:
+```bash
+docker build -t kinya-whisper .
+```
+
+Then run:
+```bash
+docker run -p 5000:5000 kinya-whisper
+```
+
+These changes were introduced via Shrimp tasks to resolve Coolify deployment failures caused by platform-specific dependencies (e.g., `tensorflow-macos`).
