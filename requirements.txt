@@ -364,7 +364,6 @@ PyWavelets==1.7.0
 PyYAML==6.0.2
 pyzbar==0.1.9
 pyzmq==25.1.0
-pyztec @ file:///Users/gabriel/opencvProjects/pyztec
 pyzxing==1.0.2
 qrcode==8.0
 qrcodegen==1.8.0
