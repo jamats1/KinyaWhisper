@@ -1,0 +1,21 @@
+# Ignore large audio datasets and temp artifacts
+audio/**
+unseen_audio_data/**
+*.wav
+*.mp3
+
+# Ignore training data
+*.jsonl
+
+# Byte-compiled / cache
+__pycache__/
+*.py[cod]
+
+# git and venv
+.git/
+.venv/
+
+# Misc
+*.log
+*.tmp
+*.bak 

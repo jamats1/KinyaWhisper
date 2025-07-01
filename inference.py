@@ -1,43 +1,87 @@
-from transformers import WhisperProcessor, WhisperForConditionalGeneration
-import torchaudio
-import torch
+from __future__ import annotations
+
+"""inference.py
+Reusable transcription utilities for KinyaWhisper.
+
+Usage (CLI):
+    python inference.py --audio path/to/file.mp3
+
+This module also exposes the function:
+    transcribe_audio(file_path: str) -> str
+which is imported by the Flask server (app.py).
+"""
+
+import argparse
+import functools
 import os
 from pathlib import Path
+from typing import Tuple
 
-# ====== Configuration ======
-audio_path = "unseen_audio_data/rw-unseen-001.mp3"
-output_dir = "transcription_output"
+import torch
+import torchaudio
+from transformers import WhisperForConditionalGeneration, WhisperProcessor
 
-# ====== Load model and processor ======
-model = WhisperForConditionalGeneration.from_pretrained("benax-rw/KinyaWhisper")
-processor = WhisperProcessor.from_pretrained("benax-rw/KinyaWhisper")
+_MODEL_DIR = "benax-rw/KinyaWhisper"  # HF Hub or local path
+_device = torch.device("cpu")  # Explicitly use CPU to keep container slim
 
-# ====== Load and preprocess audio ======
-waveform, sample_rate = torchaudio.load(audio_path)
 
-# Convert stereo to mono if needed
-if waveform.shape[0] > 1:
-    waveform = waveform.mean(dim=0)
+def _load_model_and_processor() -> Tuple[WhisperForConditionalGeneration, WhisperProcessor]:
+    """Load and cache Whisper model/processor to avoid reloading for every call."""
 
-# Prepare input
-inputs = processor(waveform, sampling_rate=sample_rate, return_tensors="pt")
+    @functools.lru_cache(maxsize=1)
+    def _loader():
+        model = WhisperForConditionalGeneration.from_pretrained(_MODEL_DIR)
+        processor = WhisperProcessor.from_pretrained(_MODEL_DIR)
+        model.eval()
+        return model, processor
 
-# Generate transcription
-with torch.no_grad():
-    predicted_ids = model.generate(inputs["input_features"])
+    return _loader()
 
-# Decode transcription
-transcription = processor.batch_decode(predicted_ids, skip_special_tokens=True)[0]
-print("Transcription:", transcription)
 
-# ====== Prepare output file path ======
-input_filename = Path(audio_path).stem  # e.g., "rw-unseen001"
-output_path = Path(output_dir)
-output_path.mkdir(parents=True, exist_ok=True)  # Create folder if not exist
-output_file = output_path / f"{input_filename}.txt"
+def transcribe_audio(file_path: str) -> str:
+    """Transcribe a single audio file and return the text.
 
-# Save to file
-with open(output_file, "w", encoding="utf-8") as f:
-    f.write(transcription)
+    Parameters
+    ----------
+    file_path : str
+        Path to the audio file (.wav, .mp3, etc.)
+    Returns
+    -------
+    str
+        Transcribed text.
+    """
+    if not os.path.isfile(file_path):
+        raise FileNotFoundError(file_path)
 
-print(f"Transcription saved to '{output_file}'")
+    model, processor = _load_model_and_processor()
+
+    waveform, sample_rate = torchaudio.load(file_path)
+
+    # Convert to mono if needed
+    if waveform.dim() == 2 and waveform.shape[0] > 1:
+        waveform = waveform.mean(dim=0, keepdim=True)
+
+    inputs = processor(waveform.squeeze(), sampling_rate=sample_rate, return_tensors="pt")
+
+    with torch.no_grad():
+        predicted_ids = model.generate(inputs["input_features"])
+
+    transcription = processor.batch_decode(predicted_ids, skip_special_tokens=True)[0]
+    return transcription.strip()
+
+
+# ---------------------------------------------------------------------------
+# CLI
+# ---------------------------------------------------------------------------
+
+def _cli() -> None:
+    parser = argparse.ArgumentParser(description="Transcribe an audio file using KinyaWhisper")
+    parser.add_argument("--audio", required=True, help="Path to audio file (.wav/.mp3)")
+    args = parser.parse_args()
+
+    text = transcribe_audio(args.audio)
+    print(text)
+
+
+if __name__ == "__main__":
+    _cli()
