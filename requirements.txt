@@ -188,6 +188,8 @@ pyinstaller-hooks-contrib==2023.12
 PyJWT==2.6.0
 pylibdmtx==0.1.10
 PyMuPDF==1.25.1
+PyOpenGL==3.1.7
+pyparsing==3.0.9
 pyobjc==10.0
 pyobjc-core==10.0
 pyobjc-framework-Accessibility==10.0
@@ -341,8 +343,6 @@ pyobjc-framework-VideoToolbox==10.0
 pyobjc-framework-Virtualization==10.0
 pyobjc-framework-Vision==10.0
 pyobjc-framework-WebKit==10.0
-PyOpenGL==3.1.7
-pyparsing==3.0.9
 PyQt5==5.15.11
 PyQt5-Qt5==5.15.15
 PyQt5_sip==12.15.0
