@@ -21,7 +21,7 @@ WORKDIR /app
 # Install Python dependencies first for caching benefits
 COPY requirements.txt ./
 RUN pip install --upgrade pip && \
-    grep -v "pyobjc" requirements.txt > requirements-filtered.txt && \
+    grep -Ev "pyobjc|^sklearn==" requirements.txt > requirements-filtered.txt && \
     pip install --no-cache-dir -r requirements-filtered.txt
 
 # Copy rest of application source
